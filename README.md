@@ -15,6 +15,10 @@ Download: https://github.com/garfeng/expandAutoTileToTiled/releases
 
 ## Functions
 
+- [x] Expand images
+- [x] Import terrains
+- [x] Import animations
+
 - [x] Tile size of 48/32/24/16 supported.
 
 
