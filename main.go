@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"image"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -18,8 +19,8 @@ import (
 )
 
 var (
-	srcRoot = flag.String("src", "src", "src root contains all images")
-	dstRoot = flag.String("dst", "dst", "dst root to save generated tilemaps")
+	//srcRoot = flag.String("input", "input", "src root contains all images")
+	//dstRoot = flag.String("output", "output", "dst root to save generated tilemaps")
 	isDebug = flag.Bool("debug", false, "is debug")
 )
 
@@ -31,12 +32,26 @@ const embedMapDir = "maps"
 func main() {
 	flag.Parse()
 
+	if len(os.Args) < 2 {
+		fmt.Println("usage:\r\nexpandAutoTileToTiled.exe <inputTilesetsDirectory> [-debug=false]")
+		pause()
+		return
+	}
+
 	engine := &Engine{
 		IsDebug: *isDebug,
-		SrcRoot: *srcRoot,
-		DstRoot: *dstRoot,
+		SrcRoot: os.Args[1],
+		DstRoot: "./output",
 	}
 	engine.Generate()
+
+	pause()
+}
+
+func pause() {
+	b := ""
+	fmt.Println("Finished, please close the program")
+	fmt.Scanf("%s", &b)
 }
 
 type Engine struct {
@@ -46,7 +61,7 @@ type Engine struct {
 }
 
 const (
-	baseDir = "./maps"
+	baseDir = "./tmpMaps"
 )
 
 func init() {
@@ -77,12 +92,13 @@ func (e *Engine) Generate() error {
 		}
 		gameMap, err := e.LoadMap(v.AutoMapName)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Fail to load map:", err)
 			continue
 		}
 
 		e.GenerateOneMap(gameMap, &v)
 	}
+
 	return nil
 }
 
@@ -95,6 +111,7 @@ func (e *Engine) LoadMap(mapPath string) (*tiled.Map, error) {
 	_, name := filepath.Split(mapPath)
 
 	newMapPath := filepath.Join(baseDir, name)
+
 	err = os.WriteFile(newMapPath, buff, 0755)
 	if err != nil {
 		return nil, err
@@ -131,6 +148,13 @@ func (e *Engine) ScanAutoTiles() ([]TileConfig, error) {
 
 	res := []TileConfig{}
 
+	tileNumberWidthMap := map[string]int{
+		"1": 16,
+		"2": 16,
+		"3": 16,
+		"4": 16,
+	}
+
 	for _, v := range names {
 		lowerV := strings.ToLower(v)
 		_, name := filepath.Split(v)
@@ -139,19 +163,39 @@ func (e *Engine) ScanAutoTiles() ([]TileConfig, error) {
 			if len(matched) > 0 {
 				srcPath := filepath.Join(e.SrcRoot, v)
 				typeId := matched[0][1]
+				img, err := readImage(srcPath)
+				if err != nil {
+					fmt.Println("Fail to read image", srcPath, "Error:", err)
+					continue
+				}
+				tn := tileNumberWidthMap[typeId]
+				tileSize := float64(img.Bounds().Dx()) / float64(tn)
 				res = append(res, TileConfig{
-					SrcImagePath:        srcPath,
-					TempLoadImagePath:   fmt.Sprintf("%s/A%s.png", baseDir, typeId),
-					SrcTilemapName:      fmt.Sprintf("%s/A%s.tsx", embedMapDir, typeId),
-					TempLoadTilemapName: fmt.Sprintf("%s/A%s.tsx", baseDir, typeId),
-					AutoMapName:         fmt.Sprintf("%s/A%s_expand.tmx", embedMapDir, typeId),
+					SrcImagePath:      srcPath,
+					TempLoadImagePath: fmt.Sprintf("%s/A%s.png", baseDir, typeId),
 
-					Name: name,
+					Tileset:         fmt.Sprintf("%s/A%s.tsx", embedMapDir, typeId),
+					TempLoadTileset: fmt.Sprintf("%s/A%s.tsx", baseDir, typeId),
+
+					AutoMapName:    fmt.Sprintf("%s/A%s_expand.tmx", embedMapDir, typeId),
+					Name:           name,
+					TileSize:       int(tileSize),
+					SrcImageWidth:  img.Bounds().Dx(),
+					SrcImageHeight: img.Bounds().Dy(),
 				})
 			}
 		}
 	}
 	return res, nil
+}
+
+func readImage(name string) (image.Image, error) {
+	buff, err := os.ReadFile(name)
+	if err != nil {
+		return nil, err
+	}
+	r := bytes.NewBuffer(buff)
+	return png.Decode(r)
 }
 
 func (e *Engine) PrepareTileData(cfg *TileConfig) error {
@@ -160,7 +204,17 @@ func (e *Engine) PrepareTileData(cfg *TileConfig) error {
 		return err
 	}
 
-	err = copyFile(cfg.SrcTilemapName, cfg.TempLoadTilemapName)
+	if e.IsDebug {
+		err = copyFile(cfg.Tileset, cfg.TempLoadTileset)
+	} else {
+		var buff []byte
+		buff, err = embedMap.ReadFile(cfg.Tileset)
+		if err == nil {
+			err = os.WriteFile(cfg.TempLoadTileset, buff, 0755)
+		}
+	}
+
+	//err = copyFile(cfg.Tileset, cfg.TempLoadTileset)
 	if err != nil {
 		return err
 	}
@@ -184,6 +238,18 @@ func (e *Engine) TilesetJSONDstRoot() string {
 }
 
 func (e *Engine) GenerateOneMap(gameMap *tiled.Map, cfg *TileConfig) error {
+	gameMap.TileWidth = cfg.TileSize / 2
+	gameMap.TileHeight = cfg.TileSize / 2
+
+	for _, tileset := range gameMap.Tilesets {
+		tileset.TileWidth = cfg.TileSize / 2
+		tileset.TileHeight = cfg.TileSize / 2
+		tileset.Image.Width = cfg.SrcImageWidth
+		tileset.Image.Height = cfg.SrcImageHeight
+	}
+
+	fmt.Println("tileSize = ", cfg.TileSize)
+
 	for i := range gameMap.Layers {
 		err := e.GenerateOneLayer(gameMap, i, cfg)
 		if err != nil {
@@ -235,8 +301,17 @@ func (e *Engine) GenerateOneLayer(gameMap *tiled.Map, layerIdx int, cfg *TileCon
 		return err
 	}
 
+	tileset, err := loadJSON[Tileset](dstTileBuff)
+	if err != nil {
+		return err
+	}
+
 	(*dstMap)["image"] = filepath.Join("../../img/tilesets", dstImageName)
 	(*dstMap)["name"] = replaceExtTo(dstImageName, "")
+	(*dstMap)["imagewidth"] = int(tileset.Columns) * cfg.TileSize
+	(*dstMap)["imageheight"] = int(tileset.Imageheight/tileset.Tileheight) * cfg.TileSize
+	(*dstMap)["tilewidth"] = cfg.TileSize
+	(*dstMap)["tileheight"] = cfg.TileSize
 
 	dstTileBuff, err = json.MarshalIndent(dstMap, "", "  ")
 	if err != nil {
@@ -274,9 +349,14 @@ type TileConfig struct {
 	SrcImagePath      string
 	TempLoadImagePath string
 
-	SrcTilemapName      string
-	TempLoadTilemapName string
+	Tileset         string
+	TempLoadTileset string
 
 	AutoMapName string
 	Name        string
+
+	TileSize int
+
+	SrcImageWidth  int
+	SrcImageHeight int
 }
