@@ -1,8 +1,7 @@
 maps/*.png
 example/
-!example/src
 *.exe
 vendor/
 .idea/
-tmpMaps
+tmpMaps/
 output/

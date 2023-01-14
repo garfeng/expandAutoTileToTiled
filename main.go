@@ -41,7 +41,7 @@ func main() {
 	engine := &Engine{
 		IsDebug: *isDebug,
 		SrcRoot: os.Args[1],
-		DstRoot: "./output",
+		DstRoot: "./expandOutput",
 	}
 	engine.Generate()
 
