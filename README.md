@@ -13,6 +13,12 @@ Download: https://github.com/garfeng/expandAutoTileToTiled/releases
 
 
 
+## Functions
+
+- [x] Tile size of 48/32/24/16 supported.
+
+
+
 ## Usage
 
 Drag The directory with AutoTile tilesets in it to `expandAutoTileToTiled.exe`, the output images and tilesets will be created in `expandOutput`
