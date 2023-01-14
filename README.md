@@ -2,6 +2,8 @@
 
 The program is aimed for [Tiled Plugin for RPG Maker MZ by VisuStella, VisuStellaMZ, Archeia (itch.io)](https://visustella.itch.io/tiledpluginmz)
 
+Download: https://github.com/garfeng/expandAutoTileToTiled/releases
+
 | Item               | Images                                                       | Info |
 | ------------------ | ------------------------------------------------------------ | ---- |
 | Inputs<br>(RMMZ)   | ![image-20230114230711059](README.assets/image-20230114230711059.png) |      |
@@ -26,3 +28,4 @@ The program detects auto tile with **Image Name**, that means `A1~A4` is require
 ## Licenses
 
 Free for commercial or noncommercial games.
+
