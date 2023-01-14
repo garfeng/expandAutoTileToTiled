@@ -37,5 +37,16 @@ The program detects auto tile with **Image Name**, that means `A1~A4` is require
 
 ## Licenses
 
-Free for commercial or noncommercial games.
+Free for commercial and noncommercial games.
 
+
+
+## Thanks to
+
+* [eishiya/tiled-scripts: Assorted scripts for Tiled Map Editor. (github.com)](https://github.com/eishiya/tiled-scripts)
+
+* [lafriks/go-tiled: Go library to parse Tiled map editor file format (TMX) and render map to image (github.com)](https://github.com/lafriks/go-tiled)
+
+* [Tiled | Flexible level editor (mapeditor.org)](https://www.mapeditor.org/)
+
+* [Tiled Plugin for RPG Maker MZ by VisuStella, VisuStellaMZ, Archeia (itch.io)](https://visustella.itch.io/tiledpluginmz)
