@@ -1,5 +1,7 @@
 # Expand RPG Maker AutoTile to Tiled style
 
+【[简体中文](./README-cn.md)】
+
 The program is aimed for [Tiled Plugin for RPG Maker MZ by VisuStella, VisuStellaMZ, Archeia (itch.io)](https://visustella.itch.io/tiledpluginmz)
 
 Download: https://github.com/garfeng/expandAutoTileToTiled/releases
