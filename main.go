@@ -280,7 +280,14 @@ func (e *Engine) GenerateOneLayer(gameMap *tiled.Map, layerIdx int, cfg *TileCon
 		return err
 	}
 
-	dstImageName := replaceExtTo(cfg.Name, fmt.Sprintf("_%d.png", layerIdx+1))
+	ext := ""
+
+	if len(gameMap.Layers) > 1 {
+		ext = fmt.Sprintf("_%d", layerIdx+1)
+	}
+
+	dstImageName := replaceExtTo(cfg.Name, ext+".png")
+
 	dstImagePath := filepath.Join(e.TilesetImageDstRoot(), dstImageName)
 
 	err = os.WriteFile(dstImagePath, w.Bytes(), 0755)
@@ -317,7 +324,8 @@ func (e *Engine) GenerateOneLayer(gameMap *tiled.Map, layerIdx int, cfg *TileCon
 	if err != nil {
 		return err
 	}
-	dstTileName := replaceExtTo(cfg.Name, fmt.Sprintf("_%d.json", layerIdx+1))
+
+	dstTileName := replaceExtTo(cfg.Name, ext+".json")
 	dstTilePath := filepath.Join(e.TilesetJSONDstRoot(), dstTileName)
 	err = os.WriteFile(dstTilePath, dstTileBuff, 0755)
 	return err
