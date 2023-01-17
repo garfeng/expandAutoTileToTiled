@@ -306,7 +306,7 @@ func (e *Engine) GenerateOneLayer(gameMap *tiled.Map, layerIdx int, cfg *TileCon
 		return err
 	}
 
-	(*dstMap)["image"] = filepath.Join("../../img/tilesets", dstImageName)
+	(*dstMap)["image"] = strings.ReplaceAll(filepath.Join("../../img/tilesets", dstImageName), "\\", "/")
 	(*dstMap)["name"] = replaceExtTo(dstImageName, "")
 	(*dstMap)["imagewidth"] = int(tileset.Columns) * cfg.TileSize
 	(*dstMap)["imageheight"] = int(tileset.Imageheight/tileset.Tileheight) * cfg.TileSize
